@@ -2,6 +2,8 @@ const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser');
 require('dotenv').config()
+const fileUpload = require('express-fileupload')
+const fs = require('fs-extra');
 const admin = require('firebase-admin')
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.newsi.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
@@ -10,7 +12,8 @@ const app = express()
 
 app.use(bodyParser.json());
 app.use(cors());
-
+app.use(express.static('service'));
+app.use(fileUpload());
 
 //
   
@@ -31,6 +34,55 @@ client.connect(err => {
   const ordersCollection = client.db(`${process.env.DB_NAME}`).collection("Orders");
   const reviewsCollection = client.db(`${process.env.DB_NAME}`).collection("Reviews");
   const servicesCollection = client.db(`${process.env.DB_NAME}`).collection("services");
+  const adminsCollection = client.db(`${process.env.DB_NAME}`).collection("admins");
+  //
+    app.post('/addService', (req, res) => {
+      const file = req.files.file;
+      const title = req.body.title;
+      const description = req.body.description;
+      // const filePath = `${__dirname}/service/${file.name}`
+      // file.mv(filePath, err => {
+      //   if(err){
+      //     console.log(err);
+      //     return res.status(500).send({msg: 'Failed to upload Image'});
+      //   }
+        const newImg = file.data/* fs.readFileSync(filePath) */;
+        const encImg = newImg.toString('base64');
+        var image = {
+          contentType: /* req.files.file. */data/* mimetype */,
+          size: /* req.files. */file.size,
+          img: Buffer.from(encImg, 'base64')
+        };
+        servicesCollection.insertOne({title, description, image})
+        .then(result => {
+          // fs.remove(filePath, error => {
+          //   if(error){
+          //     console.log(error)
+          //     return res.status(500).send({msg: 'Failed to upload Image'});
+          //   }
+            res.send(result.insertedCount > 0)
+          // })
+          
+        })
+      // })
+    })
+  //
+  app.post('/makeAdmin', (req, res) => {
+    const admin = req.body;
+    adminsCollection.insertOne(admin)
+    .then(result => {
+      res.send(result.insertedCount > 0)
+    })
+  })
+  //
+  app.post('/isAdmin', (req, res) => {
+    const email = req.body.email;
+    adminsCollection.find({email: email})
+    .toArray((err, admins) => {
+      res.send(admins.length > 0)
+      
+    })
+  })
   //
     app.get('/services', (req, res) => {
       servicesCollection.find({})
@@ -54,7 +106,7 @@ client.connect(err => {
       })
     })
   //
-    app.get('/customer/services', (req, res) => {
+    app.get('/orders', (req, res) => {
       ordersCollection.find({})
       .toArray((err, documents) => {
         res.send(documents)
@@ -94,7 +146,10 @@ client.connect(err => {
         // Handle error
       });
     }
+  //
     
+  //
+  
 
 
     
