@@ -1,7 +1,8 @@
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser');
-require('dotenv').config()
+require('dotenv').config();
+const ObjectId = require('mongodb').ObjectId;
 const fileUpload = require('express-fileupload')
 const fs = require('fs-extra');
 const admin = require('firebase-admin')
@@ -40,25 +41,29 @@ client.connect(err => {
       const file = req.files.file;
       const title = req.body.title;
       const description = req.body.description;
-      // const filePath = `${__dirname}/service/${file.name}`
+      // const filePath = `${__dirname}/service/${file.name}`;
       // file.mv(filePath, err => {
       //   if(err){
       //     console.log(err);
-      //     return res.status(500).send({msg: 'Failed to upload Image'});
+      //     return res.status(5000).send({msg: 'Failed to upload Image'})
       //   }
-        const newImg = file.data/* fs.readFileSync(filePath) */;
+        // const newImg = fs.readFileSync(filePath);
+        const newImg = file.data;
         const encImg = newImg.toString('base64');
-        var image = {
-          contentType: /* req.files.file. */data/* mimetype */,
-          size: /* req.files. */file.size,
+
+        const image = {
+          // contentType: req.files.file.mimetype,
+          contentType: file.mimetype,
+          // size: req.files.file.size,
+          size: file.size,
           img: Buffer.from(encImg, 'base64')
         };
         servicesCollection.insertOne({title, description, image})
         .then(result => {
           // fs.remove(filePath, error => {
           //   if(error){
-          //     console.log(error)
-          //     return res.status(500).send({msg: 'Failed to upload Image'});
+          //     console.log(error) 
+          //      res.status(5000).send({msg: 'Failed to upload Image'})
           //   }
             res.send(result.insertedCount > 0)
           // })
@@ -110,6 +115,16 @@ client.connect(err => {
       ordersCollection.find({})
       .toArray((err, documents) => {
         res.send(documents)
+      })
+    })
+  //
+    app.patch('/update/:id', (req, res) => {
+      ordersCollection.updateOne( {_id: ObjectId(req.params.id)}, 
+      {
+        $set: {status: req.body.status}
+      })
+      .then(result => {
+        res.send(result.modifiedCount > 0);
       })
     })
   //
