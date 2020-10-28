@@ -1,6 +1,6 @@
 # Creative-Agency-server
 ***
-## Used Technology: `Expressjs`,`ExpressJs` `MongoDb`, `Express-fileupload`, `Nodemon`, `dotenv`
+## Used Technology: `ExpressJs` `MongoDb`, `Express-fileupload`, `Nodemon`, `dotenv`
 
 
 
